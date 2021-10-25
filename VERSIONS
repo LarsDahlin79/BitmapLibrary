@@ -1,0 +1,12 @@
+
+Version 0.1
+Basic functionality
+Create 24bit bitmaps
+Read 24 it bitmap from file
+Write 24bit to file
+Set pixel in 24bit bitmap
+
+Future versions
+Support for more resolutions
+Draw functions, such as draw line, square etc
+Support compression
