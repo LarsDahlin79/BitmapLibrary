@@ -10,7 +10,7 @@ typedef enum {
     RGB2,
     RGB16,
     RGB24,
-    RGBA24,          /* include an 8-bit alpha channel */
+    RGBA24,                     /* include an 8-bit alpha channel */
     RGB_COUNT
 } resolutions_t;
 
@@ -23,7 +23,7 @@ typedef enum {
  * @return A pointer to a bitmap, or NULL if allocation failed.
  */
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
-                                        resolutions_t resolution);
+                                          resolutions_t resolution);
 
 /**
  * Deallocates the given bitmap. After this function is called, the 

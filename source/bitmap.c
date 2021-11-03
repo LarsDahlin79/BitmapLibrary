@@ -48,12 +48,12 @@ static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
                                    uint32_t pos, uint32_t red,
                                    uint32_t green, uint32_t blue);
 static uint32_t calculate_pos_24bit(uint32_t xpos, uint32_t ypos,
-                                    uint16_t resolution, uint32_t width);
+                                    uint32_t width);
 static uint16_t get_resolution_int(resolutions_t resolution);
 /*********************************************/
 
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
-                                        resolutions_t resolution) {
+                                          resolutions_t resolution) {
 
     /* check that the given resolution is known */
     if (0xFFFF == get_resolution_int(resolution)) {
@@ -73,9 +73,10 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     bitmap->unused = 0ul;
 
     /* Setup the DIB header */
-    uint32_t raw_size = (width * (resolution / 8) + 2) * height;
+    uint8_t padding = width % 4;
+    uint32_t raw_size = (width * (resolution / 8) + padding) * height;
     bitmap->size_of_file = raw_size + bitmap->data_offset;
-    bitmap->raw_size = (width * (resolution / 8) + 2) * height;
+    bitmap->raw_size = (width * (resolution / 8) + padding) * height;
 
     /* header size is always 40 byte in this version of bitmaps */
     bitmap->dib_header_size = 40ul;
@@ -91,7 +92,8 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     bitmap->nr_of_important_colours = 0u;
 
     uint32_t data_size =
-        (bitmap->width * (bitmap->resolution / 8) + 2) * bitmap->height;
+        (bitmap->width * (bitmap->resolution / 8) +
+         padding) * bitmap->height;
 
     bitmap->bitmap_data = malloc(data_size);
     if (NULL == bitmap->bitmap_data) {
@@ -120,7 +122,7 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
     }
 
     if (data[0] != 'B' || data[1] != 'M') {
-	free(data);
+        free(data);
         return MAGIC_NUMBER_MISSING;
     }
 
@@ -134,7 +136,7 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
     memcpy(&bitmap->nr_of_colour_planes, data + 26u, sizeof(uint16_t));
     memcpy(&bitmap->resolution, data + 28u, sizeof(uint32_t));
     if (0xFFFF == get_resolution_int(bitmap->resolution)) {
-	free(data);
+        free(data);
         return UNSUPPORTED_RESOLUTION;
     }
 
@@ -146,15 +148,17 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
            sizeof(uint32_t));
     memcpy(&bitmap->nr_of_important_colours, data + 50u, sizeof(uint32_t));
 
+    uint8_t padding = bitmap->width % 4;
     uint32_t data_size =
-        (bitmap->width * (bitmap->resolution / 8) + 2) * bitmap->height;
+        (bitmap->width * (bitmap->resolution / 8) +
+         padding) * bitmap->height;
 
     if (NULL != bitmap->bitmap_data) {
         free(bitmap->bitmap_data);
     }
     bitmap->bitmap_data = malloc(data_size);
     if (NULL == bitmap->bitmap_data) {
-	free(data);
+        free(data);
         return MEMORY_ALLOCATION_FAILED;
     }
     memcpy(bitmap->bitmap_data, data + 54u, data_size);
@@ -185,8 +189,10 @@ error_codes bitmap_write_to_file(struct bitmap_definition_t* bitmap,
     fwrite(&bitmap->nr_of_important_colours, 1, sizeof(uint32_t), handler);
 
     /* write pixels */
+    uint8_t padding = bitmap->width % 4;
     size_t data_size =
-        (bitmap->width * (bitmap->resolution / 8) + 2) * bitmap->height;
+        (bitmap->width * (bitmap->resolution / 8) +
+         padding) * bitmap->height;
     fwrite(bitmap->bitmap_data, data_size, sizeof(uint8_t), handler);
     fclose(handler);
 
@@ -200,18 +206,17 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
 
     error_codes result = NO_ERROR;
 
-    if (xpos > bitmap->width){
-	return X_POSITION_TOO_HIGH;
+    if (xpos > bitmap->width) {
+        return X_POSITION_TOO_HIGH;
     }
-    if (ypos > bitmap->height){
-	return Y_POSITION_TOO_HIGH;
+    if (ypos > bitmap->height) {
+        return Y_POSITION_TOO_HIGH;
     }
 
     if (bitmap->resolution == 24) {
         /* calculate pos, incl. padding */
         uint32_t pos = calculate_pos_24bit(xpos,
                                            bitmap->height - ypos - 1,
-                                           bitmap->resolution,
                                            bitmap->width);
         result = set_pixel_24bit(bitmap, pos, red, green, blue);
     } else {
@@ -227,10 +232,12 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
     /* to keep track of when to add padding */
     uint32_t xpos = 0;
     uint32_t pos = 0;
+    uint8_t padding = bitmap->width % 4;
 
     /* Add two bytes for every row to compensate for padding */
     uint32_t data_size =
-        (bitmap->width * (bitmap->resolution / 8) + 2) * bitmap->height;
+        (bitmap->width * (bitmap->resolution / 8) +
+         padding) * bitmap->height;
     while (pos < data_size) {
         if (bitmap->resolution == 24) {
             set_pixel_24bit(bitmap, pos, red, green, blue);
@@ -242,7 +249,7 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
         if (xpos % (bitmap->width * bitmap->resolution / 8) == 0) {
             bitmap->bitmap_data[pos] = 0x00;
             bitmap->bitmap_data[pos + 1] = 0x00;
-            pos += 2;
+            pos += padding;
             xpos = 0;
         }
     }
@@ -302,12 +309,14 @@ static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
  * Only valid for 24bit bitmaps.
  */
 static uint32_t calculate_pos_24bit(uint32_t xpos, uint32_t ypos,
-                                    uint16_t resolution, uint32_t width) {
+                                    uint32_t width) {
 
-    /* add two bytes for every row for padding, regardless of resolution */
-    uint8_t bytes_per_pixel = resolution / 8;
+    /* Padding increases the size of the row to a multiple of 4 */
+    uint8_t padding = width % 4;
+    uint8_t bytes_per_pixel = 24 / 8;
     uint32_t pos =
-        (width * bytes_per_pixel + 2) * ypos + xpos * bytes_per_pixel;
+        (width * bytes_per_pixel + padding) * ypos +
+        xpos * bytes_per_pixel;
     return pos;
 }
 
