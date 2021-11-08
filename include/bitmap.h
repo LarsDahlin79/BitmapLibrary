@@ -78,4 +78,9 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
                              uint32_t green, uint32_t blue,
                              uint32_t alpha);
 
+error_codes bitmap_draw_line(struct bitmap_definition_t* bitmap,
+                             uint32_t x1, uint32_t y1, uint32_t x2,
+                             uint32_t y2, uint8_t thickness, uint32_t red,
+			     uint32_t green, uint32_t blue, uint32_t alpha);
+
 #endif                          /* BITMAP_H */

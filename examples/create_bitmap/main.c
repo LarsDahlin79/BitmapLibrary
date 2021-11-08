@@ -38,11 +38,19 @@ int main(int argc, char** argv) {
         }
         ypos++;
     }
-
     bitmap_write_to_file(bw_bitmap,
                          "../examples/create_bitmap/bw_bitmap.bmp");
     bitmap_destroy(bw_bitmap);
     bw_bitmap = NULL;
+
+    struct bitmap_definition_t* line_bitmap =
+        bitmap_create(125, 100, RGB24);
+    bitmap_fill(line_bitmap, 0x00, 0x00, 0x00);
+    bitmap_draw_line(line_bitmap, 10, 10, 115, 90, 1, 0xff, 0xff, 0xff, 0x00);
+    bitmap_write_to_file(line_bitmap,
+                         "../examples/create_bitmap/line_bitmap.bmp");
+    bitmap_destroy(line_bitmap);
+    line_bitmap = NULL;
 
     return 0;
 }

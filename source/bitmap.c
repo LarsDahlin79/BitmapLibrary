@@ -41,6 +41,15 @@ struct bitmap_definition_t {
     uint8_t* bitmap_data;
 };
 
+typedef enum {
+    LEFT_TO_RIGHT,
+    RIGHT_TO_LEFT,
+    UP_DOWN,                    /* used for vertical lines */
+    DOWN_UP,                    /* used for vertical lines */
+    NO_DIRECTION,
+    DIR_COUNT
+} line_directions_t;
+
 /* private function headers */
 /*********************************************/
 static uint8_t* read_data_from_file(char* filename);
@@ -52,6 +61,10 @@ static uint32_t calculate_pos_24bit(uint32_t xpos, uint32_t ypos,
 static uint16_t get_resolution_int(resolutions_t resolution);
 static uint32_t calculate_raw_size(uint32_t width, uint32_t height,
                                    uint32_t resolution);
+static line_directions_t get_direction(uint32_t x1, uint32_t y1,
+                                       uint32_t x2, uint32_t y2);
+static float calc_gradient(uint32_t x1, uint32_t y1, uint32_t x2,
+                           uint32_t y2);
 /*********************************************/
 
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
@@ -71,6 +84,8 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     /* Setup the bitmap header */
     bitmap->id[0] = 'B';
     bitmap->id[1] = 'M';
+
+    /* Offset is size of Bitmap header and DIB header */
     bitmap->data_offset = 54;
     bitmap->unused = 0ul;
 
@@ -81,7 +96,7 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     bitmap->size_of_file = raw_size + bitmap->data_offset;
     bitmap->raw_size = raw_size;
 
-    /* header size is always 40 byte in this version of bitmaps */
+    /* Header size is always 40 byte in this version of bitmaps */
     bitmap->dib_header_size = 40ul;
 
     bitmap->width = width;
@@ -236,7 +251,7 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
                                             bitmap->height,
                                             bitmap->resolution);
     while (pos < data_size) {
-        if (bitmap->resolution == 24) {
+        if (24 == bitmap->resolution) {
             set_pixel_24bit(bitmap, pos, red, green, blue);
             pos += 3;
             xpos += 3;
@@ -250,6 +265,31 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
     }
 
     return NO_ERROR;
+}
+
+error_codes bitmap_draw_line(struct bitmap_definition_t* bitmap,
+                             uint32_t x1, uint32_t y1, uint32_t x2,
+                             uint32_t y2, uint8_t thickness, uint32_t red,
+			     uint32_t green, uint32_t blue, uint32_t alpha) {
+
+    line_directions_t dir = get_direction(x1, y1, x2, y2);
+    float gradient = 0;
+    float fy1 = (float) y1;
+    if (x2 != x1) {
+        gradient = calc_gradient(x1, y1, x2, y2);
+    } else {
+        gradient = 1;
+    }
+    if (LEFT_TO_RIGHT == dir) {
+	do {
+	    bitmap_set_pixel(bitmap, x1, (uint32_t) (fy1 + 0.5f), red, green,
+			     blue, alpha);
+
+            x1++;
+            fy1 = fy1 + gradient;
+        } while (x1 < x2 && fy1 < y2);
+    }
+    return 0;
 }
 
 /************************************************************************/
@@ -337,4 +377,32 @@ static uint32_t calculate_raw_size(uint32_t width, uint32_t height,
     uint8_t padding = width % 4;
     uint32_t raw_size = (width * (resolution / 8) + padding) * height;
     return raw_size;
+}
+
+/**
+ * Returns the direction between two given points.
+ */
+static line_directions_t get_direction(uint32_t x1, uint32_t y1,
+                                       uint32_t x2, uint32_t y2) {
+    if (x1 < x2 && y1 != y2) {
+        return LEFT_TO_RIGHT;
+    } else if (x1 > x2 && y1 != y2) {
+        return RIGHT_TO_LEFT;
+    } else if (x1 == x2 && y1 < y2) {
+        return UP_DOWN;
+    } else if (x1 == x2 && y1 > y2) {
+        return DOWN_UP;
+    } else {
+        return NO_DIRECTION;
+    }
+}
+
+static float calc_gradient(uint32_t x1, uint32_t y1, uint32_t x2,
+                           uint32_t y2) {
+    float fx1 = (float) x1;
+    float fx2 = (float) x2;
+    float fy1 = (float) y1;
+    float fy2 = (float) y2;
+    float gradient = (fy2 - fy1) / (fx2 - fx1);
+    return gradient;
 }
