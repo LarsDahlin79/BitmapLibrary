@@ -42,10 +42,14 @@ struct bitmap_definition_t {
 };
 
 typedef enum {
-    LEFT_TO_RIGHT,
-    RIGHT_TO_LEFT,
+    LEFT_TO_RIGHT_UP_DOWN,
+    LEFT_TO_RIGHT_DOWN_UP,
+    RIGHT_TO_LEFT_UP_DOWN,
+    RIGHT_TO_LEFT_DOWN_UP,
     UP_DOWN,                    /* used for vertical lines */
     DOWN_UP,                    /* used for vertical lines */
+    LEFT_RIGHT,                 /* used for horisontal lines */
+    RIGHT_LEFT,                 /* used for horisontal lines */
     NO_DIRECTION,
     DIR_COUNT
 } line_directions_t;
@@ -63,8 +67,12 @@ static uint32_t calculate_raw_size(uint32_t width, uint32_t height,
                                    uint32_t resolution);
 static line_directions_t get_direction(uint32_t x1, uint32_t y1,
                                        uint32_t x2, uint32_t y2);
-static float calc_gradient(uint32_t x1, uint32_t y1, uint32_t x2,
-                           uint32_t y2);
+static float calc_gradient(line_directions_t dir, uint32_t x1, uint32_t y1,
+                           uint32_t x2, uint32_t y2);
+static int8_t get_x_inc(uint32_t x1, uint32_t y1, uint32_t x2,
+                        uint32_t y2);
+static bool line_last_pixel(line_directions_t dir, uint32_t x1, float y1,
+                            uint32_t x2, float y2);
 /*********************************************/
 
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
@@ -269,26 +277,21 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
 
 error_codes bitmap_draw_line(struct bitmap_definition_t* bitmap,
                              uint32_t x1, uint32_t y1, uint32_t x2,
-                             uint32_t y2, uint8_t thickness, uint32_t red,
-			     uint32_t green, uint32_t blue, uint32_t alpha) {
+                             uint32_t y2, uint32_t red, uint32_t green,
+                             uint32_t blue, uint32_t alpha) {
 
     line_directions_t dir = get_direction(x1, y1, x2, y2);
-    float gradient = 0;
+    int8_t x_inc = get_x_inc(x1, y1, x2, y2);
+    float gradient = calc_gradient(dir, x1, y1, x2, y2);
     float fy1 = (float) y1;
-    if (x2 != x1) {
-        gradient = calc_gradient(x1, y1, x2, y2);
-    } else {
-        gradient = 1;
-    }
-    if (LEFT_TO_RIGHT == dir) {
-	do {
-	    bitmap_set_pixel(bitmap, x1, (uint32_t) (fy1 + 0.5f), red, green,
-			     blue, alpha);
 
-            x1++;
-            fy1 = fy1 + gradient;
-        } while (x1 < x2 && fy1 < y2);
-    }
+    do {
+        bitmap_set_pixel(bitmap, x1, (uint32_t) (fy1 + 0.5f),
+                         red, green, blue, alpha);
+        x1 += x_inc;
+        fy1 = fy1 + gradient;
+    } while (!line_last_pixel(dir, x1, fy1, x2, (float) y2));
+
     return 0;
 }
 
@@ -384,25 +387,77 @@ static uint32_t calculate_raw_size(uint32_t width, uint32_t height,
  */
 static line_directions_t get_direction(uint32_t x1, uint32_t y1,
                                        uint32_t x2, uint32_t y2) {
-    if (x1 < x2 && y1 != y2) {
-        return LEFT_TO_RIGHT;
-    } else if (x1 > x2 && y1 != y2) {
-        return RIGHT_TO_LEFT;
+    if (x1 < x2 && y1 < y2) {
+        return LEFT_TO_RIGHT_UP_DOWN;
+    } else if (x1 < x2 && y1 > y2) {
+        return LEFT_TO_RIGHT_DOWN_UP;
+    } else if (x1 > x2 && y1 < y2) {
+        return RIGHT_TO_LEFT_UP_DOWN;
+    } else if (x1 > x2 && y1 > y2) {
+        return RIGHT_TO_LEFT_DOWN_UP;
     } else if (x1 == x2 && y1 < y2) {
         return UP_DOWN;
     } else if (x1 == x2 && y1 > y2) {
         return DOWN_UP;
+    } else if (x1 < x2 && y1 == y2) {
+        return LEFT_RIGHT;
+    } else if (x1 > x2 && y1 == y2) {
+        return RIGHT_LEFT;
     } else {
         return NO_DIRECTION;
     }
 }
 
-static float calc_gradient(uint32_t x1, uint32_t y1, uint32_t x2,
-                           uint32_t y2) {
+static float calc_gradient(line_directions_t dir, uint32_t x1, uint32_t y1,
+                           uint32_t x2, uint32_t y2) {
     float fx1 = (float) x1;
     float fx2 = (float) x2;
     float fy1 = (float) y1;
     float fy2 = (float) y2;
-    float gradient = (fy2 - fy1) / (fx2 - fx1);
+    float gradient;
+    if (x2 != x1) {
+        gradient = (fy2 - fy1) / (fx2 - fx1);
+    } else if (y1 < y2) {
+        return 1.0f;
+    } else if (y1 > y2) {
+        return -1.0f;
+    }
+
+    if (RIGHT_TO_LEFT_UP_DOWN == dir || RIGHT_TO_LEFT_DOWN_UP == dir ||
+        DOWN_UP == dir) {
+        gradient *= -1;
+    }
     return gradient;
+}
+
+static int8_t get_x_inc(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
+    if (x1 < x2) {
+        return 1;
+    } else if (x1 > x2) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+static bool line_last_pixel(line_directions_t dir, uint32_t x1, float fy1,
+                            uint32_t x2, float fy2) {
+    switch (dir) {
+    case LEFT_TO_RIGHT_UP_DOWN:
+    case LEFT_TO_RIGHT_DOWN_UP:
+    case LEFT_RIGHT:
+        return (x1 > x2);
+    case RIGHT_TO_LEFT_UP_DOWN:
+    case RIGHT_TO_LEFT_DOWN_UP:
+    case RIGHT_LEFT:
+        return (x1 < x2);
+    case UP_DOWN:
+        return (fy1 > fy2);
+    case DOWN_UP:
+        return (fy1 < fy2);
+    case NO_DIRECTION:
+    case DIR_COUNT:
+    default:
+        return false;
+    }
 }

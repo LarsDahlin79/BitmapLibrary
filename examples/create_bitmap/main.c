@@ -46,7 +46,15 @@ int main(int argc, char** argv) {
     struct bitmap_definition_t* line_bitmap =
         bitmap_create(125, 100, RGB24);
     bitmap_fill(line_bitmap, 0x00, 0x00, 0x00);
-    bitmap_draw_line(line_bitmap, 10, 10, 115, 90, 1, 0xff, 0xff, 0xff, 0x00);
+    bitmap_draw_line(line_bitmap, 62, 10, 62, 50, 0x7f, 0xff, 0xff, 0x00);
+    bitmap_draw_line(line_bitmap, 10, 10, 62, 50, 0xff, 0x7f, 0xff, 0x00);
+    bitmap_draw_line(line_bitmap, 10, 90, 62, 50, 0xff, 0xff, 0x7f, 0x00);
+    bitmap_draw_line(line_bitmap, 115, 10, 62, 50, 0x7f, 0x7f, 0xff, 0x00);
+    bitmap_draw_line(line_bitmap, 115, 90, 62, 50, 0xff, 0x7f, 0x7f, 0x00);
+    bitmap_draw_line(line_bitmap, 62, 90, 62, 50, 0x7f, 0xff, 0x7f, 0x00);
+    bitmap_draw_line(line_bitmap, 10, 50, 62, 50, 0x10, 0x20, 0x30, 0x00);
+    bitmap_draw_line(line_bitmap, 115, 50, 62, 50, 0x40, 0x50, 0x60, 0x00);
+    bitmap_set_pixel(line_bitmap, 62, 50, 0xff, 0xff, 0xff, 0x00);
     bitmap_write_to_file(line_bitmap,
                          "../examples/create_bitmap/line_bitmap.bmp");
     bitmap_destroy(line_bitmap);

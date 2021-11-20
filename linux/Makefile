@@ -1,7 +1,7 @@
 
 
 CC=gcc
-CFLAGS=-Wall -Werror -ansi
+CFLAGS=-Wall -Werror -ansi -g
 EXE=test
 DEBUG=debug
 OBJ=main.o
