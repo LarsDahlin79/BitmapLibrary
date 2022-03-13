@@ -57,8 +57,23 @@ int main(int argc, char** argv) {
     bitmap_set_pixel(line_bitmap, 62, 50, 0xff, 0xff, 0xff, 0x00);
     bitmap_write_to_file(line_bitmap,
                          "../examples/create_bitmap/line_bitmap.bmp");
+
     bitmap_destroy(line_bitmap);
     line_bitmap = NULL;
+
+    struct bitmap_definition_t* arrow_bitmap =
+        bitmap_create(150, 100, RGB24);
+    bitmap_fill(arrow_bitmap, 0x00, 0x00, 0x00);
+    bitmap_draw_rectangle(arrow_bitmap, 30, 30, 95, 60, 0xff, 0xff, 0xff,
+                          0x00);
+    bitmap_draw_triangle(arrow_bitmap, 95, 20, 95, 45, 125, 45, 0xff, 0xff,
+                         0xff, 0x00);
+    bitmap_draw_triangle(arrow_bitmap, 95, 70, 95, 44, 115, 44, 0xff, 0xff,
+                         0xff, 0x00);
+    bitmap_write_to_file(arrow_bitmap,
+                         "../examples/create_bitmap/arrow_bitmap.bmp");
+    bitmap_destroy(arrow_bitmap);
+    arrow_bitmap = NULL;
 
     return 0;
 }

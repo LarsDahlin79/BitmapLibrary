@@ -1,3 +1,26 @@
+/*
+  MIT License
+
+  Copyright (c) 2021 LarsDahlin79
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+*/
 
 #include <string.h>
 #include <stdio.h>
@@ -71,8 +94,11 @@ static float calc_gradient(line_directions_t dir, uint32_t x1, uint32_t y1,
                            uint32_t x2, uint32_t y2);
 static int8_t get_x_inc(uint32_t x1, uint32_t y1, uint32_t x2,
                         uint32_t y2);
+static float triangle_x_gradient(line_directions_t dir, uint32_t x1,
+                                 uint32_t y1, uint32_t x2, uint32_t y2);
 static bool line_last_pixel(line_directions_t dir, uint32_t x1, float y1,
                             uint32_t x2, float y2);
+static bool triangle_last_line(uint32_t y1, uint32_t y2, bool dir);
 /*********************************************/
 
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
@@ -235,7 +261,7 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
         return Y_POSITION_TOO_HIGH;
     }
 
-    if (bitmap->resolution == 24) {
+    if (24 == bitmap->resolution) {
         /* calculate pos, incl. padding */
         uint32_t pos = calculate_pos_24bit(xpos,
                                            bitmap->height - ypos - 1,
@@ -293,6 +319,70 @@ error_codes bitmap_draw_line(struct bitmap_definition_t* bitmap,
     } while (!line_last_pixel(dir, x1, fy1, x2, (float) y2));
 
     return 0;
+}
+
+error_codes bitmap_draw_rectangle(struct bitmap_definition_t* bitmap,
+                                  uint32_t x1, uint32_t y1, uint32_t x2,
+                                  uint32_t y2, uint32_t red,
+                                  uint32_t green, uint32_t blue,
+                                  uint32_t alpha) {
+
+    if (x1 > bitmap->width || x2 > bitmap->width) {
+        return X_POSITION_TOO_HIGH;
+    }
+
+    if (y1 > bitmap->height || y2 > bitmap->height) {
+        return Y_POSITION_TOO_HIGH;
+    }
+
+    /* TODO: replace with is done function, y1 > y2 */
+    while (y1 < y2) {
+        bitmap_draw_line(bitmap, x1, y1, x2, y1, red, green, blue, alpha);
+
+        /* TODO: replace with next pixel function, y1 > y2 */
+        y1++;
+    }
+
+    return NO_ERROR;
+}
+
+error_codes bitmap_draw_triangle(struct bitmap_definition_t* bitmap,
+                                 uint32_t x1, uint32_t y1, uint32_t x2,
+                                 uint32_t y2, uint32_t x3, uint32_t y3,
+                                 uint32_t red, uint32_t green,
+                                 uint32_t blue, uint32_t alpha) {
+
+    /* draw a line from coordinates 1 and coordinates 3 */
+    line_directions_t dir = get_direction(x1, y1, x3, y3);
+
+    /* not correct function, this handles y-coordinate */
+    /* nedd a function for x coordinate */
+    float gradient = triangle_x_gradient(dir, x1, y1, x3, y3);
+    uint32_t x = x1;
+    bool verticle_dir = y1 < y2;
+
+    /* if (LEFT_TO_RIGHT_DOWN_UP == dir){ */
+    /*  x = x1 + (gradient + 0.5f); */
+    /* }else{ */
+    /*  x = x1 - (gradient + 0.5f); */
+    /* } */
+
+    /* for each row, draw a line from y2 to the previous created line */
+    do {
+        bitmap_draw_line(bitmap, x1, y1, x, y1, red, green, blue, alpha);
+        x += (gradient + 0.5f);
+        if (0 == x) {
+            break;
+        }
+
+        if (verticle_dir) {
+            y1++;
+        } else {
+            y1--;
+        }
+    } while (!triangle_last_line(y1, y2, verticle_dir));
+
+    return NO_ERROR;
 }
 
 /************************************************************************/
@@ -408,13 +498,34 @@ static line_directions_t get_direction(uint32_t x1, uint32_t y1,
     }
 }
 
+static float triangle_x_gradient(line_directions_t dir, uint32_t x1,
+                                 uint32_t y1, uint32_t x2, uint32_t y2) {
+    float fx1 = (float) x1;
+    float fx2 = (float) x2;
+    float fy1 = (float) y1;
+    float fy2 = (float) y2;
+    float gradient = 1.0f;
+    if (y2 != y1) {
+        gradient = (fx2 - fx1) / (fy2 - fy1);
+    } else if (x1 < x2) {
+        return 1.0f;
+    } else if (x1 > x2) {
+        return -1.0f;
+    }
+
+    if (LEFT_TO_RIGHT_DOWN_UP == dir || DOWN_UP == dir) {
+        gradient *= -1;
+    }
+    return gradient;
+}
+
 static float calc_gradient(line_directions_t dir, uint32_t x1, uint32_t y1,
                            uint32_t x2, uint32_t y2) {
     float fx1 = (float) x1;
     float fx2 = (float) x2;
     float fy1 = (float) y1;
     float fy2 = (float) y2;
-    float gradient;
+    float gradient = 1.0f;
     if (x2 != x1) {
         gradient = (fy2 - fy1) / (fx2 - fx1);
     } else if (y1 < y2) {
@@ -440,24 +551,35 @@ static int8_t get_x_inc(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2) {
     }
 }
 
+/* draw_line helper function */
 static bool line_last_pixel(line_directions_t dir, uint32_t x1, float fy1,
                             uint32_t x2, float fy2) {
     switch (dir) {
     case LEFT_TO_RIGHT_UP_DOWN:
     case LEFT_TO_RIGHT_DOWN_UP:
     case LEFT_RIGHT:
-        return (x1 > x2);
+        return (x1 >= x2);
     case RIGHT_TO_LEFT_UP_DOWN:
     case RIGHT_TO_LEFT_DOWN_UP:
     case RIGHT_LEFT:
-        return (x1 < x2);
+        return (x1 <= x2);
     case UP_DOWN:
-        return (fy1 > fy2);
+        return (fy1 >= fy2);
     case DOWN_UP:
-        return (fy1 < fy2);
+        return (fy1 <= fy2);
     case NO_DIRECTION:
     case DIR_COUNT:
     default:
-        return false;
+        return true;
     }
+}
+
+static bool triangle_last_line(uint32_t y1, uint32_t y2, bool dir) {
+    bool last_line = false;
+    if (dir) {
+        last_line = y1 >= y2;
+    } else {
+        last_line = y1 <= y2;
+    }
+    return last_line;
 }
