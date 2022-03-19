@@ -335,11 +335,8 @@ error_codes bitmap_draw_rectangle(struct bitmap_definition_t* bitmap,
         return Y_POSITION_TOO_HIGH;
     }
 
-    /* TODO: replace with is done function, y1 > y2 */
     while (y1 < y2) {
         bitmap_draw_line(bitmap, x1, y1, x2, y1, red, green, blue, alpha);
-
-        /* TODO: replace with next pixel function, y1 > y2 */
         y1++;
     }
 
@@ -355,17 +352,9 @@ error_codes bitmap_draw_triangle(struct bitmap_definition_t* bitmap,
     /* draw a line from coordinates 1 and coordinates 3 */
     line_directions_t dir = get_direction(x1, y1, x3, y3);
 
-    /* not correct function, this handles y-coordinate */
-    /* nedd a function for x coordinate */
     float gradient = triangle_x_gradient(dir, x1, y1, x3, y3);
     uint32_t x = x1;
     bool verticle_dir = y1 < y2;
-
-    /* if (LEFT_TO_RIGHT_DOWN_UP == dir){ */
-    /*  x = x1 + (gradient + 0.5f); */
-    /* }else{ */
-    /*  x = x1 - (gradient + 0.5f); */
-    /* } */
 
     /* for each row, draw a line from y2 to the previous created line */
     do {
