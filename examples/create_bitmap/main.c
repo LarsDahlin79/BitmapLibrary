@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "error_codes.h"
-#include "bitmap.h"
+#include <error_codes.h>
+#include <bitmap.h>
 
 int main(int argc, char** argv) {
 

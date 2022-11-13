@@ -124,9 +124,9 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     bitmap->unused = 0ul;
 
     /* Setup the DIB header */
-    uint32_t raw_size = calculate_raw_size(bitmap->width,
-                                           bitmap->height,
-                                           bitmap->resolution);
+    uint32_t raw_size = calculate_raw_size(width,
+                                           height,
+                                           get_resolution_int(resolution));
     bitmap->size_of_file = raw_size + bitmap->data_offset;
     bitmap->raw_size = raw_size;
 

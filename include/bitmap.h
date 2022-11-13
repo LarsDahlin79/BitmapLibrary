@@ -25,6 +25,9 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
+#define MAJOR_VERSION 1
+#define MINOR_VERSION 0
+
 /* This struct is defined in the source file. It shall not be access by users. */
 struct bitmap_definition_t;
 
