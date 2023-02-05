@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     bitmap_set_pixel(new_bitmap, 3, 5, 0xff, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 5, 3, 0x00, 0xff, 0xff, 0x00);
     bitmap_write_to_file(new_bitmap,
-                         "../examples/create_bitmap/new_bitmap.bmp");
+                         "../../examples/create_bitmap/new_bitmap.bmp");
     bitmap_destroy(new_bitmap);
     new_bitmap = NULL;
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
         ypos++;
     }
     bitmap_write_to_file(bw_bitmap,
-                         "../examples/create_bitmap/bw_bitmap.bmp");
+                         "../../examples/create_bitmap/bw_bitmap.bmp");
     bitmap_destroy(bw_bitmap);
     bw_bitmap = NULL;
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     bitmap_draw_line(line_bitmap, 115, 50, 62, 50, 0x40, 0x50, 0x60, 0x00);
     bitmap_set_pixel(line_bitmap, 62, 50, 0xff, 0xff, 0xff, 0x00);
     bitmap_write_to_file(line_bitmap,
-                         "../examples/create_bitmap/line_bitmap.bmp");
+                         "../../examples/create_bitmap/line_bitmap.bmp");
 
     bitmap_destroy(line_bitmap);
     line_bitmap = NULL;
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     bitmap_draw_triangle(arrow_bitmap, 95, 70, 95, 44, 115, 44, 0xff, 0xff,
                          0xff, 0x00);
     bitmap_write_to_file(arrow_bitmap,
-                         "../examples/create_bitmap/arrow_bitmap.bmp");
+                         "../../examples/create_bitmap/arrow_bitmap.bmp");
     bitmap_destroy(arrow_bitmap);
     arrow_bitmap = NULL;
 
