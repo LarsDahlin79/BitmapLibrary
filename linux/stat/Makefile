@@ -14,10 +14,10 @@ CFLAGS=-Wall -Werror -ansi -g
 all: $(LIB) $(TEST_STAT)
 
 $(EXE): $(OBJ) $(LIB)
-	$(CC) $(CFLAGS) -I$(INC_DIR) -o $@ $(OBJ) $(LIB)
+	$(CC) $(CFLAGS) -I$(INC_DIR) -lm -o $@ $(OBJ) $(LIB)
 
 $(DEBUG): $(OBJ) bitmap_debug.o
-	$(CC) $(CFLAGS) -I$(INC_DIR) -o $@ $(OBJ) bitmap_debug.o
+	$(CC) $(CFLAGS) -I$(INC_DIR) -lm -o $@ $(OBJ) bitmap_debug.o
 
 $(OBJ): $(EXAMPLE_DIR)/create_bitmap/main.c 
 	$(CC) $(CFLAGS) -I$(INC_DIR) -c -o $@ $^

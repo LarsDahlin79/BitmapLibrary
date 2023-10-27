@@ -163,4 +163,23 @@ error_codes bitmap_draw_triangle(struct bitmap_definition_t* bitmap,
                                  uint32_t red, uint32_t green,
                                  uint32_t blue, uint32_t alpha);
 
+/**
+ * Draws a filled ellipse on the given coordinates and given size.
+ * @param bitmap The bitmap to draw the figure in.
+ * @param xpos The x coordinate.
+ * @param ypos The y coordinate.
+ * @param width The with of the ellipse.
+ * @param height The height of the ellipse.
+ * @param red The value of red colour.
+ * @param green The value of green colour.
+ * @param blue The value of blue colour.
+ * @param alpha The value of the alpha channel. For future versions.
+ * @return NO_ERROR if ok, an error code if anything went wrong.
+ */
+error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
+				uint32_t xpos, uint32_t ypos, uint32_t width,
+				uint32_t height, double start_radius, double end_radius,
+				uint32_t red, uint32_t green,
+				uint32_t blue, uint32_t alpha);
+
 #endif                          /* BITMAP_H */
