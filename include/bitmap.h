@@ -177,9 +177,10 @@ error_codes bitmap_draw_triangle(struct bitmap_definition_t* bitmap,
  * @return NO_ERROR if ok, an error code if anything went wrong.
  */
 error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
-				uint32_t xpos, uint32_t ypos, uint32_t width,
-				uint32_t height, double start_radius, double end_radius,
-				uint32_t red, uint32_t green,
-				uint32_t blue, uint32_t alpha);
+                                uint32_t xpos, uint32_t ypos,
+                                uint32_t width, uint32_t height,
+                                double start_radius, double end_radius,
+                                uint32_t red, uint32_t green,
+                                uint32_t blue, uint32_t alpha);
 
 #endif                          /* BITMAP_H */

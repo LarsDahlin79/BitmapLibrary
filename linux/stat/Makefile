@@ -37,7 +37,7 @@ clean:
 	rm $(EXE) $(DEBUG) *.o $(LIB) 2> /dev/null ../source/*~ ../include/*~ *~ ../examples/create_bitmap/*~ ../examples/create_bitmap/*.bmp
 
 indent:
-	indent --align-with-spaces --braces-on-if-line --braces-on-func-def-line --cuddle-else --fix-nested-comments --indent-level4 --k-and-r-style -nbap --no-tabs --pointer-align-left --remove-preprocessor-space  ../source/bitmap.c ../include/bitmap.h ../include/error_codes.h ../examples/create_bitmap/main.c
+	indent --align-with-spaces --braces-on-if-line --braces-on-func-def-line --cuddle-else --fix-nested-comments --indent-level4 --k-and-r-style -nbap --no-tabs --pointer-align-left --remove-preprocessor-space  $(SRC_DIR)/bitmap.c $(INC_DIR)/bitmap.h $(INC_DIR)/error_codes.h $(EXAMPLE_DIR)/create_bitmap/main.c
 
 check:
 	cppcheck --language=c --enable=warning --enable=style --enable=portability --enable=performance ../examples/create_bitmap/ ../source/

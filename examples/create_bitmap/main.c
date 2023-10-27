@@ -75,11 +75,15 @@ int main(int argc, char** argv) {
     bitmap_destroy(arrow_bitmap);
     arrow_bitmap = NULL;
 
-    struct bitmap_definition_t* ellipse_bitmap = bitmap_create(750, 705, RGB24);
+    struct bitmap_definition_t* ellipse_bitmap =
+        bitmap_create(750, 705, RGB24);
     bitmap_fill(ellipse_bitmap, 0x00, 0x00, 0x00);
-    bitmap_draw_ellipse(ellipse_bitmap, 200, 150, 100, 100, 0, 2*3.14f, 0xFF, 0xFF, 0xFF, 0x00);
-    bitmap_draw_ellipse(ellipse_bitmap, 200, 450, 200, 100, 0, 2*3.14f, 0xFF, 0xFF, 0x00, 0x00);
-    bitmap_draw_ellipse(ellipse_bitmap, 400, 150, 100, 200, 0, 2*3.14f, 0xFF, 0x00, 0x00, 0x00);
+    bitmap_draw_ellipse(ellipse_bitmap, 200, 150, 100, 100, 0, 2 * 3.14f,
+                        0xFF, 0xFF, 0xFF, 0x00);
+    bitmap_draw_ellipse(ellipse_bitmap, 200, 450, 200, 100, 0, 2 * 3.14f,
+                        0xFF, 0xFF, 0x00, 0x00);
+    bitmap_draw_ellipse(ellipse_bitmap, 400, 150, 100, 200, 0, 2 * 3.14f,
+                        0xFF, 0x00, 0x00, 0x00);
     bitmap_write_to_file(ellipse_bitmap,
                          "../../examples/create_bitmap/ellipse_bitmap.bmp");
     bitmap_destroy(ellipse_bitmap);

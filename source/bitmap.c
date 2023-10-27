@@ -100,7 +100,8 @@ static float triangle_x_gradient(line_directions_t dir, uint32_t x1,
 static bool line_last_pixel(line_directions_t dir, uint32_t x1, float y1,
                             uint32_t x2, float y2);
 static bool triangle_last_line(uint32_t y1, uint32_t y2, bool dir);
-static uint32_t get_ellipse_y_coordinate(uint32_t height, uint32_t xpos, uint32_t width);
+static uint32_t get_ellipse_y_coordinate(uint32_t height, uint32_t xpos,
+                                         uint32_t width);
 /*********************************************/
 
 struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
@@ -377,28 +378,33 @@ error_codes bitmap_draw_triangle(struct bitmap_definition_t* bitmap,
 }
 
 error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
-				uint32_t xpos, uint32_t ypos, uint32_t width,
-				uint32_t height, double start_radius, double end_radius,
-				uint32_t red, uint32_t green,
-				uint32_t blue, uint32_t alpha){
+                                uint32_t xpos, uint32_t ypos,
+                                uint32_t width, uint32_t height,
+                                double start_radius, double end_radius,
+                                uint32_t red, uint32_t green,
+                                uint32_t blue, uint32_t alpha) {
 
-    int32_t current_xpos = (int32_t)width/2;
+    int32_t current_xpos = (int32_t) width / 2;
     current_xpos *= -1;
-    uint32_t xstart = xpos - width/2;
-    uint32_t xend = xpos + width/2;
+    uint32_t xstart = xpos - width / 2;
+    uint32_t xend = xpos + width / 2;
 
-    while (xstart < xend ) {
-	uint32_t current_height = get_ellipse_y_coordinate(height/2, (uint32_t)abs(current_xpos), width/2);
-	uint32_t y1 = ypos - current_height;
-	uint32_t y2 = ypos + current_height;
-	uint32_t current_ypos = y1;
-	while (current_ypos < y2){
-	    /* FUTURE VERSION: exclude pixels not within the start & end radius */
-	    bitmap_set_pixel(bitmap, xstart, current_ypos, red, green, blue, alpha);
-	    current_ypos++;
-	}
-	xstart++;
-	current_xpos++;
+    while (xstart < xend) {
+        uint32_t current_height =
+            get_ellipse_y_coordinate(height / 2,
+                                     (uint32_t) abs(current_xpos),
+                                     width / 2);
+        uint32_t y1 = ypos - current_height;
+        uint32_t y2 = ypos + current_height;
+        uint32_t current_ypos = y1;
+        while (current_ypos < y2) {
+            /* FUTURE VERSION: exclude pixels not within the start & end radius */
+            bitmap_set_pixel(bitmap, xstart, current_ypos, red, green,
+                             blue, alpha);
+            current_ypos++;
+        }
+        xstart++;
+        current_xpos++;
     }
 
     return NO_ERROR;
@@ -603,12 +609,13 @@ static bool triangle_last_line(uint32_t y1, uint32_t y2, bool dir) {
     return last_line;
 }
 
-static uint32_t get_ellipse_y_coordinate(uint32_t height, uint32_t xpos, uint32_t width) {
+static uint32_t get_ellipse_y_coordinate(uint32_t height, uint32_t xpos,
+                                         uint32_t width) {
     /* sqrt(height^2 * (1 - xpos^2/width^2)) */
     double x2 = xpos * xpos;
     double w2 = width * width;
     double h2 = height * height;
-    double root = abs(h2 * (1 - x2/w2));
+    double root = abs(h2 * (1 - x2 / w2));
     double y2 = sqrt(root);
     return (uint32_t) (y2 + 0.5f);
 }
