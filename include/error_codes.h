@@ -36,6 +36,8 @@ typedef enum {
     X_POSITION_TOO_HIGH,
     Y_POSITION_TOO_HIGH,
     MAGIC_NUMBER_MISSING,
+    INCORRECT_SIZE,
+    RESOLUTION_DIFFER,
     ERROR_COUNT
 } error_codes;
 

@@ -25,8 +25,8 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-#define MAJOR_VERSION 1
-#define MINOR_VERSION 0
+#define MAJOR_VERSION 0
+#define MINOR_VERSION 3
 
 /* This struct is defined in the source file. It shall not be access by users. */
 struct bitmap_definition_t;
@@ -105,6 +105,21 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
                              uint32_t alpha);
 
 /**
+ * Reads the value for the given coordinate.
+ * @param bitmap The bitmap to get a pixel from.
+ * @param xpos The row number of read the pixel in.
+ * @param ypos The line number to read the pixel in.
+ * @param red The value of red colour.
+ * @param green The value of green colour.
+ * @param blue The value of blue colour.
+ * @param alpha The value of the alpha channel. For future versions.
+ * @return NO_ERROR if ok, an error code if anything went wrong.
+ */
+error_codes bitmap_get_pixel(struct bitmap_definition_t* bitmap,
+                             uint32_t xpos, uint32_t ypos, uint32_t* red,
+                             uint32_t* green, uint32_t* blue,
+                             uint32_t* alpha);
+/**
  * Draws a line between the two given coordinates.
  * @param bitmap The bitmap to draw the figure in.
  * @param x1 The first x coordinate.
@@ -182,5 +197,23 @@ error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
                                 double start_radius, double end_radius,
                                 uint32_t red, uint32_t green,
                                 uint32_t blue, uint32_t alpha);
+
+
+/**
+ * Copies the new bitmap into the current bitmap. 
+ * @param bitmap The current bitmap.
+ * @param dest_x The xpos where to insert the bew bitmap.
+ * @param dest_y The ypos where to insert the bew bitmap.
+ * @param new_bitmap the bitmap to insert.
+ * @param source_x1 The xpos where to start read the bew bitmap.
+ * @param source_y1 The ypos where to start read the bew bitmap.
+ * @param source_x2 The xpos where to stop read the bew bitmap.
+ * @param source_y2 The ypos where to stop read the bew bitmap.
+ */
+error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
+				 uint32_t dest_x, uint32_t dest_y,
+				 struct bitmap_definition_t* new_bitmap,
+				 uint32_t source_x1, uint32_t source_y1,
+				 uint32_t source_x2, uint32_t source_y2);
 
 #endif                          /* BITMAP_H */

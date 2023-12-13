@@ -21,6 +21,13 @@ int main(int argc, char** argv) {
     bitmap_set_pixel(new_bitmap, 5, 5, 0x00, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 3, 5, 0xff, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 5, 3, 0x00, 0xff, 0xff, 0x00);
+
+    uint32_t red, green, blue, alpha;
+    bitmap_get_pixel(new_bitmap, 3, 3, &red, &green, &blue, &alpha);
+    if (red != 0xff || green != 0x00 || blue != 0x00){
+	fprintf(stderr, "Error reading pixel\n");
+    }
+
     bitmap_write_to_file(new_bitmap,
                          "../../examples/create_bitmap/new_bitmap.bmp");
     bitmap_destroy(new_bitmap);
@@ -88,6 +95,27 @@ int main(int argc, char** argv) {
                          "../../examples/create_bitmap/ellipse_bitmap.bmp");
     bitmap_destroy(ellipse_bitmap);
     ellipse_bitmap = NULL;
+
+    /**********************************************/
+    struct bitmap_definition_t* original_bitmap =
+	bitmap_create(10, 10, RGB24);
+    bitmap_fill(original_bitmap, 0x00, 0x00, 0x00);
+
+    struct bitmap_definition_t* small_bitmap =
+	bitmap_create(5, 5, RGB24);
+    bitmap_fill(small_bitmap, 0xFF, 0xFF, 0xFF);
+
+    bitmap_insert_bitmap(original_bitmap, 1, 2, small_bitmap, 0, 0, 5, 5);
+
+    bitmap_write_to_file(original_bitmap,
+                         "../../examples/create_bitmap/insert_bitmap.bmp");
+
+    bitmap_destroy(original_bitmap);
+    original_bitmap = NULL;
+
+    bitmap_destroy(small_bitmap);
+    small_bitmap = NULL;
+    /**********************************************/
 
     return 0;
 }

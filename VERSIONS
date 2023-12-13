@@ -9,6 +9,11 @@ Set pixel in 24bit bitmap
 Version 0.2
 Bugfix in padding size
 
+Version 0.3
+Added insert_bitmap
+Added draw_ellipse
+Minor cleanup
+
 Future versions
 Support for more resolutions
 Draw functions, such as draw line, square etc

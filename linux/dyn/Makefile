@@ -38,4 +38,6 @@ check:
 	cppcheck --language=c --enable=warning --enable=style --enable=portability --enable=performance ../../examples/create_bitmap/ ../../source/
 
 install:
-	@echo "TODO"
+	cp $(LIB) /usr/local/lib
+	cp $(INC)/bitmap.h /usr/local/include
+	cp $(INC)/error_codes.h /usr/local/include
