@@ -37,7 +37,7 @@ indent:
 	indent --align-with-spaces --braces-on-if-line --braces-on-func-def-line --cuddle-else --fix-nested-comments --indent-level4 --k-and-r-style -nbap --no-tabs --pointer-align-left --remove-preprocessor-space  $(SRC)/bitmap.c $(INC)/bitmap.h $(INC)/error_codes.h $(EXAMPLES)/create_bitmap/main.c
 
 check:
-	cppcheck --language=c --enable=warning --enable=style --enable=portability --enable=performance ../../examples/create_bitmap/ ../../source/
+	cppcheck --language=c --enable=warning --enable=style --enable=portability --enable=performance $(EXAMPLES)/create_bitmap/ $(SRC)/
 
 install:
 	cp $(LIB) /usr/local/lib
