@@ -96,6 +96,7 @@ int main(int argc, char** argv) {
     bitmap_destroy(ellipse_bitmap);
     ellipse_bitmap = NULL;
 
+    /* test insert bitmap */
     /**********************************************/
     struct bitmap_definition_t* original_bitmap =
 	bitmap_create(10, 10, RGB24);
@@ -115,6 +116,22 @@ int main(int argc, char** argv) {
 
     bitmap_destroy(small_bitmap);
     small_bitmap = NULL;
+    /**********************************************/
+
+    /* test copy bitmap */
+    /**********************************************/
+    struct bitmap_definition_t* copy_bitmap =
+	bitmap_create(10, 10, RGB24);
+    error_codes error =  bitmap_read_from_file(copy_bitmap,
+					       "../../examples/create_bitmap/new_bitmap.bmp");
+    if (NO_ERROR != error){
+	fprintf (stderr, "Error reading bitmap from file %d\n", error);
+	bitmap_destroy(copy_bitmap);
+	return 0;
+    }
+    bitmap_write_to_file(copy_bitmap,
+                         "../../examples/create_bitmap/copy_bitmap.bmp");
+    bitmap_destroy(copy_bitmap);
     /**********************************************/
 
     return 0;

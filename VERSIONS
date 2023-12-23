@@ -14,6 +14,9 @@ Added insert_bitmap
 Added draw_ellipse
 Minor cleanup
 
+Version 0.5
+Bugfix in read bitmap function
+
 Future versions
 Support for more resolutions
 Draw functions, such as draw line, square etc

@@ -194,10 +194,10 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
     memcpy(&bitmap->height, data + 22u, sizeof(uint32_t));
     memcpy(&bitmap->nr_of_colour_planes, data + 26u, sizeof(uint16_t));
     memcpy(&bitmap->resolution, data + 28u, sizeof(uint32_t));
-    if (0xFFFF == get_resolution_int(bitmap->resolution)) {
-        free(data);
-        return UNSUPPORTED_RESOLUTION;
-    }
+    /* if (0xFFFF == get_resolution_int(bitmap->resolution)) { */
+    /*     free(data); */
+    /*     return UNSUPPORTED_RESOLUTION; */
+    /* } */
 
     memcpy(&bitmap->compression_type, data + 30u, sizeof(uint32_t));
     memcpy(&bitmap->raw_size, data + 34u, sizeof(uint32_t));
@@ -494,6 +494,10 @@ static uint8_t* read_data_from_file(char* filename) {
 
     /* get the size of the file */
     FILE* handler = fopen(filename, "rb");
+    if (NULL == handler){
+	fprintf (stderr, "Error opening file\n");
+	return NULL;
+    }
     fseek(handler, 0L, SEEK_END);
     long int size = ftell(handler);
     rewind(handler);
