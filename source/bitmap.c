@@ -85,12 +85,13 @@ static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
                                    uint32_t pos, uint32_t red,
                                    uint32_t green, uint32_t blue);
 error_codes get_pixel_24bit(struct bitmap_definition_t* bitmap,
-				  uint32_t pos, uint32_t* red,
-				  uint32_t* green, uint32_t* blue);
+                            uint32_t pos, uint32_t * red,
+                            uint32_t * green, uint32_t * blue);
 static uint32_t calculate_pos_24bit(uint32_t xpos, uint32_t ypos,
                                     uint32_t width);
 static uint16_t get_resolution_int(resolutions_t resolution);
-static uint32_t calculate_bitmap_width(uint32_t width, uint32_t resolution);
+static uint32_t calculate_bitmap_width(uint32_t width,
+                                       uint32_t resolution);
 static uint32_t calculate_raw_size(uint32_t width, uint32_t height,
                                    uint32_t resolution);
 static line_directions_t get_direction(uint32_t x1, uint32_t y1,
@@ -282,9 +283,9 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
 }
 
 error_codes bitmap_get_pixel(struct bitmap_definition_t* bitmap,
-                             uint32_t xpos, uint32_t ypos, uint32_t* red,
-                             uint32_t* green, uint32_t* blue,
-                             uint32_t* alpha){
+                             uint32_t xpos, uint32_t ypos, uint32_t * red,
+                             uint32_t * green, uint32_t * blue,
+                             uint32_t * alpha) {
 
     /* check size of bitmap */
     if (xpos > bitmap->width) {
@@ -295,10 +296,10 @@ error_codes bitmap_get_pixel(struct bitmap_definition_t* bitmap,
     }
 
     if (24 == bitmap->resolution) {
-	uint32_t pos = calculate_pos_24bit(xpos,
-					   bitmap->height - ypos - 1,
-					   bitmap->width);
-	get_pixel_24bit(bitmap, pos, red, green, blue);
+        uint32_t pos = calculate_pos_24bit(xpos,
+                                           bitmap->height - ypos - 1,
+                                           bitmap->width);
+        get_pixel_24bit(bitmap, pos, red, green, blue);
     }
 
     return NO_ERROR;
@@ -417,10 +418,11 @@ error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
     uint32_t xend = xpos + width / 2;
 
     while (xstart < xend) {
-        uint32_t current_height =
-            get_ellipse_y_coordinate(height / 2,
-                                     (uint32_t) abs(current_xpos),
-                                     width / 2);
+        uint32_t current_height = get_ellipse_y_coordinate(height / 2,
+                                                           (uint32_t)
+                                                           abs
+                                                           (current_xpos),
+                                                           width / 2);
         uint32_t y1 = ypos - current_height;
         uint32_t y2 = ypos + current_height;
         uint32_t current_ypos = y1;
@@ -438,45 +440,46 @@ error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
 }
 
 error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
-				 uint32_t dest_x, uint32_t dest_y,
-				 struct bitmap_definition_t* new_bitmap,
-				 uint32_t source_x1, uint32_t source_y1,
-				 uint32_t source_x2, uint32_t source_y2){
+                                 uint32_t dest_x, uint32_t dest_y,
+                                 struct bitmap_definition_t* new_bitmap,
+                                 uint32_t source_x1, uint32_t source_y1,
+                                 uint32_t source_x2, uint32_t source_y2) {
 
     if ((bitmap->width < new_bitmap->width) ||
-	(bitmap->height < new_bitmap->height)){
-	return INCORRECT_SIZE;
+        (bitmap->height < new_bitmap->height)) {
+        return INCORRECT_SIZE;
     }
 
-    if (dest_x > bitmap->width){
-	return X_POSITION_TOO_HIGH;
+    if (dest_x > bitmap->width) {
+        return X_POSITION_TOO_HIGH;
     }
 
-    if (dest_y > bitmap->height){
-	return Y_POSITION_TOO_HIGH;
+    if (dest_y > bitmap->height) {
+        return Y_POSITION_TOO_HIGH;
     }
 
-    if (bitmap->resolution != new_bitmap->resolution){	
-	return RESOLUTION_DIFFER;
+    if (bitmap->resolution != new_bitmap->resolution) {
+        return RESOLUTION_DIFFER;
     }
 
     if ((bitmap->width < (new_bitmap->width + source_x1)) ||
-	(bitmap->height < (new_bitmap->height + source_y1))){
-	return INCORRECT_SIZE;
+        (bitmap->height < (new_bitmap->height + source_y1))) {
+        return INCORRECT_SIZE;
     }
 
-    while (source_y1 < source_y2){
-	uint32_t dx = dest_x;
-	uint32_t sx = source_x1;
-	while (sx < source_x2){
-	    uint32_t red, green, blue, alpha;
-	    bitmap_get_pixel(new_bitmap, sx, source_y1, &red, &green, &blue, &alpha);
-	    bitmap_set_pixel(bitmap, dx, dest_y, red, green, blue, alpha);
-	    dx++;
-	    sx++;
-	}
-	dest_y++;
-	source_y1++;
+    while (source_y1 < source_y2) {
+        uint32_t dx = dest_x;
+        uint32_t sx = source_x1;
+        while (sx < source_x2) {
+            uint32_t red, green, blue, alpha;
+            bitmap_get_pixel(new_bitmap, sx, source_y1, &red, &green,
+                             &blue, &alpha);
+            bitmap_set_pixel(bitmap, dx, dest_y, red, green, blue, alpha);
+            dx++;
+            sx++;
+        }
+        dest_y++;
+        source_y1++;
     }
 
     return NO_ERROR;
@@ -494,9 +497,9 @@ static uint8_t* read_data_from_file(char* filename) {
 
     /* get the size of the file */
     FILE* handler = fopen(filename, "rb");
-    if (NULL == handler){
-	fprintf (stderr, "Error opening file\n");
-	return NULL;
+    if (NULL == handler) {
+        fprintf(stderr, "Error opening file\n");
+        return NULL;
     }
     fseek(handler, 0L, SEEK_END);
     long int size = ftell(handler);
@@ -528,12 +531,12 @@ static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
 }
 
 error_codes get_pixel_24bit(struct bitmap_definition_t* bitmap,
-                             uint32_t pos, uint32_t* red,
-                             uint32_t* green, uint32_t* blue){
+                            uint32_t pos, uint32_t * red,
+                            uint32_t * green, uint32_t * blue) {
 
-    *blue = (uint32_t)(bitmap->bitmap_data[pos]);
-    *green = (uint32_t)(bitmap->bitmap_data[pos + 1]);
-    *red = (uint32_t)(bitmap->bitmap_data[pos + 2]);
+    *blue = (uint32_t) (bitmap->bitmap_data[pos]);
+    *green = (uint32_t) (bitmap->bitmap_data[pos + 1]);
+    *red = (uint32_t) (bitmap->bitmap_data[pos + 2]);
 
     return NO_ERROR;
 }

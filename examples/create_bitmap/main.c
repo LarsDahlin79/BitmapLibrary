@@ -24,8 +24,8 @@ int main(int argc, char** argv) {
 
     uint32_t red, green, blue, alpha;
     bitmap_get_pixel(new_bitmap, 3, 3, &red, &green, &blue, &alpha);
-    if (red != 0xff || green != 0x00 || blue != 0x00){
-	fprintf(stderr, "Error reading pixel\n");
+    if (red != 0xff || green != 0x00 || blue != 0x00) {
+        fprintf(stderr, "Error reading pixel\n");
     }
 
     bitmap_write_to_file(new_bitmap,
@@ -99,11 +99,10 @@ int main(int argc, char** argv) {
     /* test insert bitmap */
     /**********************************************/
     struct bitmap_definition_t* original_bitmap =
-	bitmap_create(10, 10, RGB24);
+        bitmap_create(10, 10, RGB24);
     bitmap_fill(original_bitmap, 0x00, 0x00, 0x00);
 
-    struct bitmap_definition_t* small_bitmap =
-	bitmap_create(5, 5, RGB24);
+    struct bitmap_definition_t* small_bitmap = bitmap_create(5, 5, RGB24);
     bitmap_fill(small_bitmap, 0xFF, 0xFF, 0xFF);
 
     bitmap_insert_bitmap(original_bitmap, 1, 2, small_bitmap, 0, 0, 5, 5);
@@ -120,14 +119,13 @@ int main(int argc, char** argv) {
 
     /* test copy bitmap */
     /**********************************************/
-    struct bitmap_definition_t* copy_bitmap =
-	bitmap_create(10, 10, RGB24);
-    error_codes error =  bitmap_read_from_file(copy_bitmap,
-					       "../../examples/create_bitmap/new_bitmap.bmp");
-    if (NO_ERROR != error){
-	fprintf (stderr, "Error reading bitmap from file %d\n", error);
-	bitmap_destroy(copy_bitmap);
-	return 0;
+    struct bitmap_definition_t* copy_bitmap = bitmap_create(10, 10, RGB24);
+    error_codes error = bitmap_read_from_file(copy_bitmap,
+                                              "../../examples/create_bitmap/new_bitmap.bmp");
+    if (NO_ERROR != error) {
+        fprintf(stderr, "Error reading bitmap from file %d\n", error);
+        bitmap_destroy(copy_bitmap);
+        return 0;
     }
     bitmap_write_to_file(copy_bitmap,
                          "../../examples/create_bitmap/copy_bitmap.bmp");

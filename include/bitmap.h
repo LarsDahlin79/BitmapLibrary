@@ -116,9 +116,9 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
  * @return NO_ERROR if ok, an error code if anything went wrong.
  */
 error_codes bitmap_get_pixel(struct bitmap_definition_t* bitmap,
-                             uint32_t xpos, uint32_t ypos, uint32_t* red,
-                             uint32_t* green, uint32_t* blue,
-                             uint32_t* alpha);
+                             uint32_t xpos, uint32_t ypos, uint32_t * red,
+                             uint32_t * green, uint32_t * blue,
+                             uint32_t * alpha);
 /**
  * Draws a line between the two given coordinates.
  * @param bitmap The bitmap to draw the figure in.
@@ -211,9 +211,9 @@ error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
  * @param source_y2 The ypos where to stop read the bew bitmap.
  */
 error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
-				 uint32_t dest_x, uint32_t dest_y,
-				 struct bitmap_definition_t* new_bitmap,
-				 uint32_t source_x1, uint32_t source_y1,
-				 uint32_t source_x2, uint32_t source_y2);
+                                 uint32_t dest_x, uint32_t dest_y,
+                                 struct bitmap_definition_t* new_bitmap,
+                                 uint32_t source_x1, uint32_t source_y1,
+                                 uint32_t source_x2, uint32_t source_y2);
 
 #endif                          /* BITMAP_H */
