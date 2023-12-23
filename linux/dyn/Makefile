@@ -31,7 +31,7 @@ $(LIB): bitmap.o
 
 .PHONY: clean indent check install
 clean:
-	rm $(EXE) $(DEBUG) *.o $(LIB) 2> /dev/null ../../source/*~ ../../include/*~ *~ ../../examples/create_bitmap/*~ ../../examples/create_bitmap/*.bmp
+	rm $(EXE) $(DEBUG) *.o $(LIB) 2> /dev/null $(SRC)/*~ $(INC)/*~ *~ $(EXAMPLES)/create_bitmap/*~ $(EXAMPLES)/create_bitmap/*.bmp
 
 indent:
 	indent --align-with-spaces --braces-on-if-line --braces-on-func-def-line --cuddle-else --fix-nested-comments --indent-level4 --k-and-r-style -nbap --no-tabs --pointer-align-left --remove-preprocessor-space  $(SRC)/bitmap.c $(INC)/bitmap.h $(INC)/error_codes.h $(EXAMPLES)/create_bitmap/main.c
