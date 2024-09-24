@@ -2,7 +2,7 @@
 A library to create and manage bitmaps
 
 Linux users
-To compile the library, go to linux directory and type "make".
+To compile the library, go to linux, and directory stat or dyn and type "make".
 Compile the example code with "make test".
 
 Define where the linker shall search for the .so file,
