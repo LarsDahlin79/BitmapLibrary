@@ -17,6 +17,10 @@ Minor cleanup
 Version 0.5
 Bugfix in read bitmap function
 
+Version 0.6
+Added functions to read height and width of bitmap
+Added insert bitmap function
+
 Future versions
 Support for more resolutions
 Draw functions, such as draw line, square etc

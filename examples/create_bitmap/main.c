@@ -2,7 +2,7 @@
 
 
 /*
- * Test program for bitmap library. Create a 10x10 bitmap and set 
+ * Test program for bitmap library. Create a 10x12 bitmap and set 
  * some pixels with different colours.
  */
 
@@ -14,13 +14,19 @@
 
 int main(int argc, char** argv) {
 
-    struct bitmap_definition_t* new_bitmap = bitmap_create(10, 10, RGB24);
+    struct bitmap_definition_t* new_bitmap = bitmap_create(10, 12, RGB24);
     bitmap_fill(new_bitmap, 0xff, 0xff, 0xff);
     bitmap_set_pixel(new_bitmap, 3, 3, 0xff, 0x00, 0x00, 0x00);
     bitmap_set_pixel(new_bitmap, 4, 4, 0x00, 0xff, 0x00, 0x00);
     bitmap_set_pixel(new_bitmap, 5, 5, 0x00, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 3, 5, 0xff, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 5, 3, 0x00, 0xff, 0xff, 0x00);
+    if (10 != bitmap_get_width(new_bitmap)){
+	fprintf(stderr, "Error reading height\n");
+    }
+    if (12 != bitmap_get_height(new_bitmap)){
+	fprintf(stderr, "Error reading height\n");
+    }
 
     uint32_t red, green, blue, alpha;
     bitmap_get_pixel(new_bitmap, 3, 3, &red, &green, &blue, &alpha);

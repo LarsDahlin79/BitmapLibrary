@@ -485,6 +485,20 @@ error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
     return NO_ERROR;
 }
 
+uint32_t bitmap_get_height(struct bitmap_definition_t* bitmap){
+    if (NULL != bitmap){
+	return bitmap->height;
+    }
+    return 0ul;
+}
+
+uint32_t bitmap_get_width(struct bitmap_definition_t* bitmap){
+    if (NULL != bitmap){
+	return bitmap->width;
+    }
+    return 0ul;
+}
+
 /************************************************************************/
 /********************* PRIVATE FUNCTIONS ********************************/
 /************************************************************************/

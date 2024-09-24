@@ -209,11 +209,26 @@ error_codes bitmap_draw_ellipse(struct bitmap_definition_t* bitmap,
  * @param source_y1 The ypos where to start read the bew bitmap.
  * @param source_x2 The xpos where to stop read the bew bitmap.
  * @param source_y2 The ypos where to stop read the bew bitmap.
+ * @return NO_ERROR if ok, an error code if anything went wrong.
  */
 error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
                                  uint32_t dest_x, uint32_t dest_y,
                                  struct bitmap_definition_t* new_bitmap,
                                  uint32_t source_x1, uint32_t source_y1,
                                  uint32_t source_x2, uint32_t source_y2);
+
+/**
+ * Reads the height of the given bitmap.
+ * @param bitmap The current bitmap.
+ * @return The height of this bitmap.
+ */
+uint32_t bitmap_get_height(struct bitmap_definition_t* bitmap);
+
+/**
+ * Reads the width of the given bitmap.
+ * @param bitmap The current bitmap.
+ * @return The width of this bitmap.
+ */
+uint32_t bitmap_get_width(struct bitmap_definition_t* bitmap);
 
 #endif                          /* BITMAP_H */
