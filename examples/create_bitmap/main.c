@@ -21,11 +21,11 @@ int main(int argc, char** argv) {
     bitmap_set_pixel(new_bitmap, 5, 5, 0x00, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 3, 5, 0xff, 0x00, 0xff, 0x00);
     bitmap_set_pixel(new_bitmap, 5, 3, 0x00, 0xff, 0xff, 0x00);
-    if (10 != bitmap_get_width(new_bitmap)){
-	fprintf(stderr, "Error reading height\n");
+    if (10 != bitmap_get_width(new_bitmap)) {
+        fprintf(stderr, "Error reading height\n");
     }
-    if (12 != bitmap_get_height(new_bitmap)){
-	fprintf(stderr, "Error reading height\n");
+    if (12 != bitmap_get_height(new_bitmap)) {
+        fprintf(stderr, "Error reading height\n");
     }
 
     uint32_t red, green, blue, alpha;
