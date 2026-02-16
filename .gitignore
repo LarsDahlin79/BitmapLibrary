@@ -1,0 +1,6 @@
+*.o
+*.so
+*.txt
+*.bmp
+*~
+linux/stat/debug
