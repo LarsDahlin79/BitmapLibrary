@@ -31,6 +31,12 @@
 #include "error_codes.h"
 #include "bitmap.h"
 
+struct bitmap_header_t {
+    uint8_t id[2];
+    uint32_t size_of_file;
+    uint32_t unused;
+};
+
 /**
  * This definition of bitmaps support the so called Windows version.
  * It uses 8 pixels per colour, i.e. 24 bit per pixel and doesn't 
@@ -43,9 +49,7 @@
  */
 struct bitmap_definition_t {
     /* Bitmap header */
-    uint8_t id[2];
-    uint32_t size_of_file;
-    uint32_t unused;
+    struct bitmap_header_t* bitmap_header;
 
     /* DIB header, Device Independant Bitmap */
     uint32_t data_offset;
@@ -80,6 +84,7 @@ typedef enum {
 
 /* private function headers */
 /*********************************************/
+static struct bitmap_header_t* create_bitmap_header();
 static uint8_t* read_data_from_file(char* filename);
 static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
                                    uint32_t pos, uint32_t red,
@@ -124,18 +129,19 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     }
 
     /* Setup the bitmap header */
-    bitmap->id[0] = 'B';
-    bitmap->id[1] = 'M';
+    bitmap->bitmap_header = create_bitmap_header();
+    if (NULL == bitmap->bitmap_header) {
+	free(bitmap);
+    }
 
     /* Offset is size of Bitmap header and DIB header */
     bitmap->data_offset = 54ul;
-    bitmap->unused = 0ul;
 
     /* Setup the DIB header */
     uint32_t raw_size = calculate_raw_size(width,
                                            height,
                                            get_resolution_int(resolution));
-    bitmap->size_of_file = raw_size + bitmap->data_offset;
+    bitmap->bitmap_header->size_of_file = raw_size + bitmap->data_offset;
     bitmap->raw_size = raw_size;
 
     /* Header size is always 40 byte in this version of bitmaps */
@@ -169,6 +175,7 @@ void bitmap_destroy(struct bitmap_definition_t* bitmap) {
     }
     if (NULL != bitmap->bitmap_data) {
         free(bitmap->bitmap_data);
+	free(bitmap->bitmap_header);
     }
     free(bitmap);
 }
@@ -186,19 +193,15 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
         return MAGIC_NUMBER_MISSING;
     }
 
-    memcpy(bitmap->id, data, sizeof(uint8_t) * 2);
-    memcpy(&bitmap->size_of_file, data + 2u, sizeof(uint32_t));
-    memcpy(&bitmap->unused, data + 6u, sizeof(uint32_t));
+    memcpy(bitmap->bitmap_header->id, data, sizeof(uint8_t) * 2);
+    memcpy(&bitmap->bitmap_header->size_of_file, data + 2u, sizeof(uint32_t));
+    memcpy(&bitmap->bitmap_header->unused, data + 6u, sizeof(uint32_t));
     memcpy(&bitmap->data_offset, data + 10u, sizeof(uint16_t));
     memcpy(&bitmap->dib_header_size, data + 14u, sizeof(uint32_t));
     memcpy(&bitmap->width, data + 18u, sizeof(uint32_t));
     memcpy(&bitmap->height, data + 22u, sizeof(uint32_t));
     memcpy(&bitmap->nr_of_colour_planes, data + 26u, sizeof(uint16_t));
     memcpy(&bitmap->resolution, data + 28u, sizeof(uint32_t));
-    /* if (0xFFFF == get_resolution_int(bitmap->resolution)) { */
-    /*     free(data); */
-    /*     return UNSUPPORTED_RESOLUTION; */
-    /* } */
 
     memcpy(&bitmap->compression_type, data + 30u, sizeof(uint32_t));
     memcpy(&bitmap->raw_size, data + 34u, sizeof(uint32_t));
@@ -229,9 +232,9 @@ error_codes bitmap_write_to_file(struct bitmap_definition_t* bitmap,
                                  char* filename) {
 
     FILE* handler = fopen(filename, "wb");
-    fwrite(bitmap->id, 2, sizeof(uint8_t), handler);
-    fwrite(&bitmap->size_of_file, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->unused, 1, sizeof(uint32_t), handler);
+    fwrite(bitmap->bitmap_header->id, 2, sizeof(uint8_t), handler);
+    fwrite(&bitmap->bitmap_header->size_of_file, 1, sizeof(uint32_t), handler);
+    fwrite(&bitmap->bitmap_header->unused, 1, sizeof(uint32_t), handler);
     fwrite(&bitmap->data_offset, 1, sizeof(uint32_t), handler);
     fwrite(&bitmap->dib_header_size, 1, sizeof(uint32_t), handler);
     fwrite(&bitmap->width, 1, sizeof(uint32_t), handler);
@@ -502,6 +505,23 @@ uint32_t bitmap_get_width(struct bitmap_definition_t* bitmap) {
 /************************************************************************/
 /********************* PRIVATE FUNCTIONS ********************************/
 /************************************************************************/
+
+/*
+ * Allocates a bitmap header struct.
+ */
+static struct bitmap_header_t* create_bitmap_header() {
+    struct bitmap_header_t* bitmap_header = malloc(sizeof(struct bitmap_header_t));
+    if (NULL == bitmap_header) {
+	return NULL;
+    }
+
+    bitmap_header->id[0] = 'B';
+    bitmap_header->id[1] = 'M';
+    bitmap_header->size_of_file = 0ul;
+    bitmap_header->unused = 0;
+
+    return bitmap_header;
+}
 
 /*
  * Read all the data from a given file, into an dynamically allocated buffer. 
