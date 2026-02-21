@@ -37,6 +37,25 @@ struct bitmap_header_t {
     uint32_t unused;
 };
 
+/*
+ * The size of DIB, Device Indenpendant Header, varios between
+ * versions of bitmap formats and resolutions.
+ */
+struct dib_header_24bit {
+    uint32_t data_offset;
+    uint32_t dib_header_size;
+    uint32_t width;
+    uint32_t height;
+    uint16_t nr_of_colour_planes;
+    uint16_t resolution;
+    uint32_t compression_type;
+    uint32_t raw_size;
+    uint32_t pixels_horisontal;
+    uint32_t pixels_vertical;
+    uint32_t nr_of_colours_in_palette;
+    uint32_t nr_of_important_colours;
+};
+
 /**
  * This definition of bitmaps support the so called Windows version.
  * It uses 8 pixels per colour, i.e. 24 bit per pixel and doesn't 
@@ -52,18 +71,7 @@ struct bitmap_definition_t {
     struct bitmap_header_t* bitmap_header;
 
     /* DIB header, Device Independant Bitmap */
-    uint32_t data_offset;
-    uint32_t dib_header_size;
-    uint32_t width;
-    uint32_t height;
-    uint16_t nr_of_colour_planes;
-    uint16_t resolution;
-    uint32_t compression_type;
-    uint32_t raw_size;
-    uint32_t pixels_horisontal;
-    uint32_t pixels_vertical;
-    uint32_t nr_of_colours_in_palette;
-    uint32_t nr_of_important_colours;
+    struct dib_header_24bit* dib_header_24bit;
 
     /* the actual pixel data */
     uint8_t* bitmap_data;
@@ -85,6 +93,8 @@ typedef enum {
 /* private function headers */
 /*********************************************/
 static struct bitmap_header_t* create_bitmap_header();
+static struct dib_header_24bit* create_dib_header_24bit(uint32_t width,
+                                                        uint32_t height);
 static uint8_t* read_data_from_file(char* filename);
 static error_codes set_pixel_24bit(struct bitmap_definition_t* bitmap,
                                    uint32_t pos, uint32_t red,
@@ -131,35 +141,20 @@ struct bitmap_definition_t* bitmap_create(uint32_t width, uint32_t height,
     /* Setup the bitmap header */
     bitmap->bitmap_header = create_bitmap_header();
     if (NULL == bitmap->bitmap_header) {
-	free(bitmap);
+        free(bitmap);
     }
 
-    /* Offset is size of Bitmap header and DIB header */
-    bitmap->data_offset = 54ul;
+    uint32_t data_size = 0;
+    if (RGB24 == resolution) {
+        bitmap->dib_header_24bit = create_dib_header_24bit(width, height);
 
-    /* Setup the DIB header */
-    uint32_t raw_size = calculate_raw_size(width,
-                                           height,
-                                           get_resolution_int(resolution));
-    bitmap->bitmap_header->size_of_file = raw_size + bitmap->data_offset;
-    bitmap->raw_size = raw_size;
 
-    /* Header size is always 40 byte in this version of bitmaps */
-    bitmap->dib_header_size = 40ul;
-
-    bitmap->width = width;
-    bitmap->height = height;
-    bitmap->nr_of_colour_planes = 1u;
-    bitmap->resolution = get_resolution_int(resolution);
-    bitmap->compression_type = 0u;
-    bitmap->pixels_horisontal = 11811u;
-    bitmap->pixels_vertical = 11811u;
-    bitmap->nr_of_colours_in_palette = 0u;
-    bitmap->nr_of_important_colours = 0u;
-
-    uint32_t data_size = calculate_raw_size(bitmap->width,
-                                            bitmap->height,
-                                            bitmap->resolution);
+        data_size = calculate_raw_size(bitmap->dib_header_24bit->width,
+                                       bitmap->dib_header_24bit->height,
+                                       bitmap->dib_header_24bit->
+                                       resolution);
+    }
+    bitmap->bitmap_header->size_of_file = data_size;
 
     bitmap->bitmap_data = malloc(data_size);
     if (NULL == bitmap->bitmap_data) {
@@ -175,7 +170,12 @@ void bitmap_destroy(struct bitmap_definition_t* bitmap) {
     }
     if (NULL != bitmap->bitmap_data) {
         free(bitmap->bitmap_data);
-	free(bitmap->bitmap_header);
+    }
+    if (NULL != bitmap->bitmap_header) {
+        free(bitmap->bitmap_header);
+    }
+    if (NULL != bitmap->dib_header_24bit) {
+	free(bitmap->dib_header_24bit);
     }
     free(bitmap);
 }
@@ -193,35 +193,50 @@ error_codes bitmap_read_from_file(struct bitmap_definition_t* bitmap,
         return MAGIC_NUMBER_MISSING;
     }
 
+    /* TODO: Need to create serialize / deserialize functions to handle other formats */
     memcpy(bitmap->bitmap_header->id, data, sizeof(uint8_t) * 2);
-    memcpy(&bitmap->bitmap_header->size_of_file, data + 2u, sizeof(uint32_t));
-    memcpy(&bitmap->bitmap_header->unused, data + 6u, sizeof(uint32_t));
-    memcpy(&bitmap->data_offset, data + 10u, sizeof(uint16_t));
-    memcpy(&bitmap->dib_header_size, data + 14u, sizeof(uint32_t));
-    memcpy(&bitmap->width, data + 18u, sizeof(uint32_t));
-    memcpy(&bitmap->height, data + 22u, sizeof(uint32_t));
-    memcpy(&bitmap->nr_of_colour_planes, data + 26u, sizeof(uint16_t));
-    memcpy(&bitmap->resolution, data + 28u, sizeof(uint32_t));
-
-    memcpy(&bitmap->compression_type, data + 30u, sizeof(uint32_t));
-    memcpy(&bitmap->raw_size, data + 34u, sizeof(uint32_t));
-    memcpy(&bitmap->pixels_horisontal, data + 38u, sizeof(uint32_t));
-    memcpy(&bitmap->pixels_vertical, data + 42u, sizeof(uint32_t));
-    memcpy(&bitmap->nr_of_colours_in_palette, data + 46u,
+    memcpy(&bitmap->bitmap_header->size_of_file, data + 2u,
            sizeof(uint32_t));
-    memcpy(&bitmap->nr_of_important_colours, data + 50u, sizeof(uint32_t));
+    memcpy(&bitmap->bitmap_header->unused, data + 6u, sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->data_offset, data + 10u,
+           sizeof(uint16_t));
+    memcpy(&bitmap->dib_header_24bit->dib_header_size, data + 14u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->width, data + 18u, sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->height, data + 22u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->nr_of_colour_planes, data + 26u,
+           sizeof(uint16_t));
+    memcpy(&bitmap->dib_header_24bit->resolution, data + 28u,
+           sizeof(uint32_t));
+
+    memcpy(&bitmap->dib_header_24bit->compression_type, data + 30u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->raw_size, data + 34u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->pixels_horisontal, data + 38u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->pixels_vertical, data + 42u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->nr_of_colours_in_palette, data + 46u,
+           sizeof(uint32_t));
+    memcpy(&bitmap->dib_header_24bit->nr_of_important_colours, data + 50u,
+           sizeof(uint32_t));
 
     if (NULL != bitmap->bitmap_data) {
         free(bitmap->bitmap_data);
     }
-    uint32_t data_size = calculate_raw_size(bitmap->width,
-                                            bitmap->height,
-                                            bitmap->resolution);
+    uint32_t data_size =
+        calculate_raw_size(bitmap->dib_header_24bit->width,
+                           bitmap->dib_header_24bit->height,
+                           bitmap->dib_header_24bit->resolution);
     bitmap->bitmap_data = malloc(data_size);
     if (NULL == bitmap->bitmap_data) {
         free(data);
         return MEMORY_ALLOCATION_FAILED;
     }
+    /* TODO: Replace constant, beceause the size of the header */
+    /* differs between versions of bitmaps */
     memcpy(bitmap->bitmap_data, data + 54u, data_size);
 
     free(data);
@@ -232,26 +247,39 @@ error_codes bitmap_write_to_file(struct bitmap_definition_t* bitmap,
                                  char* filename) {
 
     FILE* handler = fopen(filename, "wb");
+    /* TODO: Need to create serialize / deserialize functions to handle other formats */
     fwrite(bitmap->bitmap_header->id, 2, sizeof(uint8_t), handler);
-    fwrite(&bitmap->bitmap_header->size_of_file, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->bitmap_header->unused, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->data_offset, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->dib_header_size, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->width, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->height, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->nr_of_colour_planes, 1, sizeof(uint16_t), handler);
-    fwrite(&bitmap->resolution, 1, sizeof(uint16_t), handler);
-    fwrite(&bitmap->compression_type, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->raw_size, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->pixels_horisontal, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->pixels_vertical, 1, sizeof(uint32_t), handler);
-    fwrite(&bitmap->nr_of_colours_in_palette, 1, sizeof(uint32_t),
+    fwrite(&bitmap->bitmap_header->size_of_file, 1, sizeof(uint32_t),
            handler);
-    fwrite(&bitmap->nr_of_important_colours, 1, sizeof(uint32_t), handler);
+    fwrite(&bitmap->bitmap_header->unused, 1, sizeof(uint32_t), handler);
+    fwrite(&bitmap->dib_header_24bit->data_offset, 1, sizeof(uint32_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->dib_header_size, 1, sizeof(uint32_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->width, 1, sizeof(uint32_t), handler);
+    fwrite(&bitmap->dib_header_24bit->height, 1, sizeof(uint32_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->nr_of_colour_planes, 1,
+           sizeof(uint16_t), handler);
+    fwrite(&bitmap->dib_header_24bit->resolution, 1, sizeof(uint16_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->compression_type, 1,
+           sizeof(uint32_t), handler);
+    fwrite(&bitmap->dib_header_24bit->raw_size, 1, sizeof(uint32_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->pixels_horisontal, 1,
+           sizeof(uint32_t), handler);
+    fwrite(&bitmap->dib_header_24bit->pixels_vertical, 1, sizeof(uint32_t),
+           handler);
+    fwrite(&bitmap->dib_header_24bit->nr_of_colours_in_palette, 1,
+           sizeof(uint32_t), handler);
+    fwrite(&bitmap->dib_header_24bit->nr_of_important_colours, 1,
+           sizeof(uint32_t), handler);
 
-    uint32_t data_size = calculate_raw_size(bitmap->width,
-                                            bitmap->height,
-                                            bitmap->resolution);
+    uint32_t data_size =
+        calculate_raw_size(bitmap->dib_header_24bit->width,
+                           bitmap->dib_header_24bit->height,
+                           bitmap->dib_header_24bit->resolution);
     fwrite(bitmap->bitmap_data, data_size, sizeof(uint8_t), handler);
     fclose(handler);
 
@@ -265,18 +293,19 @@ error_codes bitmap_set_pixel(struct bitmap_definition_t* bitmap,
 
     error_codes result = NO_ERROR;
 
-    if (xpos > bitmap->width) {
+    if (xpos > bitmap_get_width(bitmap)) {
         return X_POSITION_TOO_HIGH;
     }
-    if (ypos > bitmap->height) {
+    if (ypos > bitmap->dib_header_24bit->height) {
         return Y_POSITION_TOO_HIGH;
     }
 
-    if (24 == bitmap->resolution) {
+    if (24 == bitmap->dib_header_24bit->resolution) {
         /* calculate pos, incl. padding */
         uint32_t pos = calculate_pos_24bit(xpos,
-                                           bitmap->height - ypos - 1,
-                                           bitmap->width);
+                                           bitmap->dib_header_24bit->
+                                           height - ypos - 1,
+                                           bitmap_get_width(bitmap));
         result = set_pixel_24bit(bitmap, pos, red, green, blue);
     } else {
         result = UNSUPPORTED_RESOLUTION;
@@ -291,17 +320,18 @@ error_codes bitmap_get_pixel(struct bitmap_definition_t* bitmap,
                              uint32_t * alpha) {
 
     /* check size of bitmap */
-    if (xpos > bitmap->width) {
+    if (xpos > bitmap_get_width(bitmap)) {
         return X_POSITION_TOO_HIGH;
     }
-    if (ypos > bitmap->height) {
+    if (ypos > bitmap->dib_header_24bit->height) {
         return Y_POSITION_TOO_HIGH;
     }
 
-    if (24 == bitmap->resolution) {
+    if (24 == bitmap->dib_header_24bit->resolution) {
         uint32_t pos = calculate_pos_24bit(xpos,
-                                           bitmap->height - ypos - 1,
-                                           bitmap->width);
+                                           bitmap->dib_header_24bit->
+                                           height - ypos - 1,
+                                           bitmap_get_width(bitmap));
         get_pixel_24bit(bitmap, pos, red, green, blue);
     }
 
@@ -314,19 +344,23 @@ error_codes bitmap_fill(struct bitmap_definition_t* bitmap, uint32_t red,
     /* to keep track of when to add padding */
     uint32_t xpos = 0;
     uint32_t pos = 0;
-    uint8_t padding = bitmap->width % 4;
-    uint32_t data_size = calculate_raw_size(bitmap->width,
-                                            bitmap->height,
-                                            bitmap->resolution);
+    uint8_t padding = bitmap_get_width(bitmap) % 4;
+    uint32_t data_size = calculate_raw_size(bitmap_get_width(bitmap),
+                                            bitmap->dib_header_24bit->
+                                            height,
+                                            bitmap->dib_header_24bit->
+                                            resolution);
     while (pos < data_size) {
-        if (24 == bitmap->resolution) {
+        if (24 == bitmap->dib_header_24bit->resolution) {
             set_pixel_24bit(bitmap, pos, red, green, blue);
             pos += 3;
             xpos += 3;
         }
 
         /* padding at end of each row */
-        if (xpos % (bitmap->width * bitmap->resolution / 8) == 0) {
+        if (xpos %
+            (bitmap_get_width(bitmap) *
+             bitmap->dib_header_24bit->resolution / 8) == 0) {
             pos += padding;
             xpos = 0;
         }
@@ -361,11 +395,12 @@ error_codes bitmap_draw_rectangle(struct bitmap_definition_t* bitmap,
                                   uint32_t green, uint32_t blue,
                                   uint32_t alpha) {
 
-    if (x1 > bitmap->width || x2 > bitmap->width) {
+    if (x1 > bitmap_get_width(bitmap) || x2 > bitmap_get_width(bitmap)) {
         return X_POSITION_TOO_HIGH;
     }
 
-    if (y1 > bitmap->height || y2 > bitmap->height) {
+    if (y1 > bitmap->dib_header_24bit->height
+        || y2 > bitmap->dib_header_24bit->height) {
         return Y_POSITION_TOO_HIGH;
     }
 
@@ -448,25 +483,29 @@ error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
                                  uint32_t source_x1, uint32_t source_y1,
                                  uint32_t source_x2, uint32_t source_y2) {
 
-    if ((bitmap->width < new_bitmap->width) ||
-        (bitmap->height < new_bitmap->height)) {
+    if ((bitmap_get_width(bitmap) < bitmap_get_width(new_bitmap)) ||
+        (bitmap->dib_header_24bit->height <
+         new_bitmap->dib_header_24bit->height)) {
         return INCORRECT_SIZE;
     }
 
-    if (dest_x > bitmap->width) {
+    if (dest_x > bitmap_get_width(bitmap)) {
         return X_POSITION_TOO_HIGH;
     }
 
-    if (dest_y > bitmap->height) {
+    if (dest_y > bitmap->dib_header_24bit->height) {
         return Y_POSITION_TOO_HIGH;
     }
 
-    if (bitmap->resolution != new_bitmap->resolution) {
+    if (bitmap->dib_header_24bit->resolution !=
+        new_bitmap->dib_header_24bit->resolution) {
         return RESOLUTION_DIFFER;
     }
 
-    if ((bitmap->width < (new_bitmap->width + source_x1)) ||
-        (bitmap->height < (new_bitmap->height + source_y1))) {
+    if ((bitmap_get_width(bitmap) <
+         (bitmap_get_width(new_bitmap) + source_x1))
+        || (bitmap->dib_header_24bit->height <
+            (new_bitmap->dib_header_24bit->height + source_y1))) {
         return INCORRECT_SIZE;
     }
 
@@ -489,15 +528,15 @@ error_codes bitmap_insert_bitmap(struct bitmap_definition_t* bitmap,
 }
 
 uint32_t bitmap_get_height(struct bitmap_definition_t* bitmap) {
-    if (NULL != bitmap) {
-        return bitmap->height;
+    if (NULL != bitmap && NULL != bitmap->dib_header_24bit) {
+        return bitmap->dib_header_24bit->height;
     }
     return 0ul;
 }
 
 uint32_t bitmap_get_width(struct bitmap_definition_t* bitmap) {
-    if (NULL != bitmap) {
-        return bitmap->width;
+    if (NULL != bitmap && NULL != bitmap->dib_header_24bit) {
+        return bitmap->dib_header_24bit->width;
     }
     return 0ul;
 }
@@ -510,9 +549,10 @@ uint32_t bitmap_get_width(struct bitmap_definition_t* bitmap) {
  * Allocates a bitmap header struct.
  */
 static struct bitmap_header_t* create_bitmap_header() {
-    struct bitmap_header_t* bitmap_header = malloc(sizeof(struct bitmap_header_t));
+    struct bitmap_header_t* bitmap_header =
+        malloc(sizeof(struct bitmap_header_t));
     if (NULL == bitmap_header) {
-	return NULL;
+        return NULL;
     }
 
     bitmap_header->id[0] = 'B';
@@ -521,6 +561,42 @@ static struct bitmap_header_t* create_bitmap_header() {
     bitmap_header->unused = 0;
 
     return bitmap_header;
+}
+
+static struct dib_header_24bit* create_dib_header_24bit(uint32_t width,
+                                                        uint32_t height) {
+
+    struct dib_header_24bit* header;
+
+    header = malloc(sizeof(struct dib_header_24bit));
+    if (NULL == header) {
+        return NULL;
+    }
+
+    /* Offset is size of Bitmap header and DIB header */
+    header->data_offset = 54ul;
+
+    /* Setup the DIB header */
+    uint32_t raw_size = calculate_raw_size(width,
+                                           height,
+                                           24);
+    header->raw_size = raw_size;
+
+    /* Header size is always 40 byte in this version of bitmaps */
+    header->dib_header_size = 40ul;
+
+    header->width = width;
+    header->height = height;
+    header->nr_of_colour_planes = 1u;
+    header->resolution = 24;
+    header->compression_type = 0u;
+    header->pixels_horisontal = 11811u;
+    header->pixels_vertical = 11811u;
+    header->nr_of_colours_in_palette = 0u;
+    header->nr_of_important_colours = 0u;
+
+
+    return header;
 }
 
 /*
